@@ -12,11 +12,18 @@ import UKMap from "./uk-map";
 
 gsap.registerPlugin(useGSAP);
 
+// Next steps
+// Add the progress indicator at the bottom (sticky)
+// Set up pin data
+// Add pins to the map
+// Make pints interactive
+// Add back functionality when clicking a pin
+
 export default function QRA() {
   const { containerRef, initialAnimationClasses, mapRef } = useLoadAnimation();
 
   return (
-    <div className="container mx-auto pt-20">
+    <div className="container mx-auto pt-20 h-dvh overflow-hidden">
       <div className="grid grid-cols-2">
         {/* Got this colour from the map using a color picker.
         Does not seem to be part of the design system so I am inlining it here. */}
@@ -64,7 +71,7 @@ function useLoadAnimation() {
   const mapRef = useRef<SVGSVGElement>(null);
   const tl = useRef<GSAPTimeline>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const initialAnimationClasses = "opacity-0 translate-y-8 blur-sm";
+  const initialAnimationClasses = "opacity-0 origin-left scale-110 blur-sm";
 
   useGSAP(
     () => {
@@ -90,14 +97,12 @@ function useLoadAnimation() {
           opacity: 1,
           scale: 1,
           duration: 1.2,
-          ease: "power2.out",
         })
         .to(
           mapRef.current,
           {
-            filter: "drop-shadow(0 0 20px rgba(255,255,255,0.15))",
+            filter: "drop-shadow(0 0 10px rgba(255,255,255,0.15))",
             duration: 0.6,
-            ease: "power2.inOut",
           },
           "<+0.5"
         )
@@ -105,11 +110,11 @@ function useLoadAnimation() {
           "[data-animate]",
           {
             opacity: 1,
-            y: 0,
             filter: "blur(0px)",
+            scale: 1,
             stagger: 0.15,
-            duration: 0.8,
-            ease: "back.out(1.4)",
+            duration: 0.6,
+            ease: "back.out(1.1)",
           },
           "<+0.3"
         );
