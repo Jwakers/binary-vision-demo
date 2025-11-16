@@ -1,11 +1,11 @@
 "use client";
 
-import { QRA_STEPS, QRAStep } from "@/constants";
+import { QRAStep } from "@/constants";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import Image from "next/image";
+import { ArrowLeft } from "lucide-react";
+import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
-import { Fragment, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import signalTowerImage from "../../../../public/signal-tower.png";
 import {
   useAnimatePathTransition,
@@ -14,6 +14,8 @@ import {
 } from "./animation";
 import { Button } from "./button";
 import { PIN_DATA, PinData } from "./data";
+import { Overlay } from "./overlay";
+import ProgressIndicator from "./progress-indicator";
 import UKMap from "./uk-map";
 
 // -- Next steps --
@@ -25,18 +27,22 @@ import UKMap from "./uk-map";
 
 // Enhancements
 // Add the aircraft flying toward the map
+// As part of the path animation, zoom the map to the two pins
 
 const initialAnimationClasses = "opacity-0 origin-left scale-110 blur-sm";
 
 export default function QRA() {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const secondaryContentRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const pinContentRef = useRef<HTMLDivElement>(null);
   const progressIndicatorRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const [activePin, setActivePin] = useState<PinData | null>(null);
   const [activeStep, setActiveStep] = useState<QRAStep | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
 
   useLoadAnimation({ containerRef, contentRef, progressIndicatorRef });
   const zoomTl = useZoomAnimation({
@@ -47,9 +53,21 @@ export default function QRA() {
     containerRef,
     progressIndicatorRef,
   });
-  const pathTl = useAnimatePathTransition(pathRef, mapContainerRef, PIN_DATA);
+  const pathTl = useAnimatePathTransition({
+    pathRef,
+    mapContainerRef,
+    contentRef,
+    secondaryContentRef,
+    pinData: PIN_DATA,
+  });
+
+  useEffect(() => {
+    if (!zoomTl.current || !activePin) return;
+    zoomTl.current.play();
+  }, [activePin, zoomTl, pathTl]);
 
   const handlePinClick = (pin: PinData) => {
+    // If time were not a restraint here I would add more accessibility features such as keyboard navigation and more aria-labels.
     setActivePin(pin);
   };
 
@@ -70,7 +88,10 @@ export default function QRA() {
 
   return (
     <>
-      <div className="relative h-dvh min-h-[1080px] overflow-hidden pt-20">
+      <div
+        data-animate-overlay
+        className="relative h-dvh min-h-[1080px] overflow-hidden pt-20"
+      >
         <div
           ref={containerRef}
           className="container mx-auto grid grid-cols-[auto_1fr]"
@@ -88,26 +109,6 @@ export default function QRA() {
               viewBox="0 100 630 1000"
               data-map
             />
-            {PIN_DATA.map((pin) => (
-              <button
-                key={pin.id}
-                className={cn(
-                  "bg-accent absolute size-4 cursor-pointer rounded-full",
-                  "scale-200 opacity-0" // initial animation class
-                )}
-                data-pin
-                aria-label={pin.name}
-                style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
-                onClick={() => handlePinClick(pin)}
-                disabled={!!activePin}
-              >
-                <span className="sr-only">{pin.name}</span>
-                <div
-                  aria-hidden="true"
-                  className="bg-accent/60 absolute inset-0 animate-ping rounded-full"
-                />
-              </button>
-            ))}
             <div className="absolute inset-0">
               {/* This SVG acts as an overlay in which we can programmatically draw lines between pins. */}
               <svg
@@ -118,7 +119,7 @@ export default function QRA() {
               >
                 <path
                   ref={pathRef}
-                  d="M 50 150 Q 200 50, 350 150"
+                  d="M 0 0 Q 200 50, 350 150"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -126,34 +127,41 @@ export default function QRA() {
                 />
               </svg>
             </div>
+            {PIN_DATA.map((pin) => (
+              <Pin
+                key={pin.id}
+                pin={pin}
+                onClick={() => handlePinClick(pin)}
+                disabled={!!activePin || !!activeStep}
+              />
+            ))}
           </div>
           {/* Right Side content section */}
           <div className="isolate grid grid-cols-1 grid-rows-1 items-center">
             {/* Initial content  */}
-            <div ref={contentRef} className="col-1 row-1 space-y-4">
-              {/* Typically I would not use an next/image for this type of thing but an SVG.
-              Also I would rarely use the next.js public directory because there is usually a cheaper way
-              to store and process (hence the unoptimized prop) images e.g. through a DAM */}
-              <Image
-                src={signalTowerImage}
-                alt="Signal Tower icon"
-                className={cn("size-[64px]", initialAnimationClasses)}
-                unoptimized
-              />
-              {/* Decided not to go with the design system typography for this demo. 
-              I have increased from the designs 33px to 48px to create better hierarchy. */}
-              <h1 className={cn("text-5xl font-bold", initialAnimationClasses)}>
-                Threat detected
-              </h1>
-              <p className={cn("text-3xl", initialAnimationClasses)}>
-                A rogue aircraft approaches UK airspace.
-              </p>
-              <Button
-                className={cn("mt-8", initialAnimationClasses)}
+            <div className="col-1 row-1 space-y-4" ref={contentRef}>
+              <ContentSection
+                title="Threat detected"
+                description="A rogue aircraft approaches UK airspace."
+                image={signalTowerImage}
+                imageAlt="Signal Tower icon"
+                cta="Co-ordinate response"
                 onClick={() => handleStepClick("COORDINATE_RESPONSE")}
-              >
-                <span>Co-ordinate response</span>
-              </Button>
+              />
+            </div>
+
+            {/* Secondary content */}
+            <div
+              className="col-1 row-1 space-y-4"
+              ref={secondaryContentRef}
+              inert
+            >
+              <ContentSection
+                title="Co-ordinate response"
+                description="RAF Boulmer identifies the rouge aircraft."
+                cta="Assess situation"
+                onClick={() => setShowOverlay(true)}
+              />
             </div>
 
             {/* Pin content */}
@@ -165,6 +173,7 @@ export default function QRA() {
                 key={activePin.id}
                 className="col-1 row-1 space-y-4"
                 ref={pinContentRef}
+                inert
               >
                 <button
                   type="button"
@@ -173,21 +182,27 @@ export default function QRA() {
                     initialAnimationClasses
                   )}
                   onClick={handleBackClick}
+                  aria-hidden="true"
                 >
                   <ArrowLeft className="size-3" />
                   <span>Back</span>
                 </button>
                 <h2
                   className={cn("text-3xl font-bold", initialAnimationClasses)}
+                  aria-hidden="true"
                 >
                   {activePin.content.title}
                 </h2>
-                <p className={cn("text-xl", initialAnimationClasses)}>
+                <p
+                  className={cn("text-xl", initialAnimationClasses)}
+                  aria-hidden="true"
+                >
                   {activePin.content.description}
                 </p>
 
                 <Link
                   href={activePin.content.cta.href}
+                  aria-hidden="true"
                   className={cn(
                     "inline-block text-sm underline",
                     initialAnimationClasses
@@ -197,6 +212,7 @@ export default function QRA() {
                 </Link>
                 {activePin.content.youtubeVideoId && (
                   <div
+                    aria-hidden="true"
                     className={cn(
                       "aspect-video w-full max-w-2xl",
                       initialAnimationClasses
@@ -215,42 +231,104 @@ export default function QRA() {
             )}
           </div>
         </div>
-      </div>
-      <div
-        className={cn(
-          "sticky bottom-15.5 flex justify-center",
-          "opacity-0" // initial animation class
-        )}
-        ref={progressIndicatorRef}
-      >
-        <ProgressIndicator activeStep={activeStep} />
+
+        {showOverlay ? <Overlay /> : null}
+
+        <div
+          className={cn(
+            "sticky bottom-15.5 flex justify-center",
+            "opacity-0" // initial animation class
+          )}
+          ref={progressIndicatorRef}
+        >
+          <ProgressIndicator activeStep={activeStep} />
+        </div>
       </div>
     </>
   );
 }
 
-function ProgressIndicator({ activeStep }: { activeStep: QRAStep | null }) {
-  const steps = Object.entries(QRA_STEPS);
+type ContentSectionProps = {
+  title: string;
+  description: string;
+  image?: StaticImageData;
+  imageAlt?: string;
+  cta: string;
+  onClick: () => void;
+};
 
+function ContentSection({
+  title,
+  description,
+  image,
+  imageAlt,
+  cta,
+  onClick,
+}: ContentSectionProps) {
   return (
-    <div className="bg-background text-foreground inline-flex justify-center rounded-[20px] px-8 py-5 shadow-xl">
-      <ol className="flex w-auto gap-12.5 font-bold">
-        {steps.map(([step, label], index) => (
-          <Fragment key={step}>
-            <li className="relative" data-animate>
-              <span>{label}</span>
-              <div
-                aria-hidden
-                className={cn(
-                  "bg-accent absolute inset-x-0 bottom-0 h-0.5 origin-left scale-x-0 transition-transform duration-700 ease-in-out",
-                  activeStep === step && "scale-x-100"
-                )}
-              />
-            </li>
-            {index < steps.length - 1 && <ArrowRight data-animate />}
-          </Fragment>
-        ))}
-      </ol>
-    </div>
+    <>
+      {/* Typically I would not use an next/image for this type of thing but an SVG.
+           Also I would rarely use the next.js public directory because there is usually a cheaper way
+           to store and process (hence the unoptimized prop) images e.g. through a DAM */}
+      {image && (
+        <Image
+          src={image}
+          alt={imageAlt || ""}
+          className={cn("size-[64px]", initialAnimationClasses)}
+          unoptimized
+          aria-hidden="true"
+        />
+      )}
+      {/* Decided not to go with the design system typography for this demo. 
+              I have increased from the designs 33px to 48px to create better hierarchy. */}
+      <h2
+        className={cn("text-5xl font-bold", initialAnimationClasses)}
+        aria-hidden="true"
+      >
+        {title}
+      </h2>
+      <p className={cn("text-3xl", initialAnimationClasses)} aria-hidden="true">
+        {description}
+      </p>
+      <Button
+        className={cn("mt-8", initialAnimationClasses)}
+        onClick={onClick}
+        aria-hidden="true"
+      >
+        {cta}
+      </Button>
+    </>
+  );
+}
+
+function Pin({
+  pin,
+  onClick,
+  disabled,
+}: {
+  pin: PinData;
+  onClick: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <button
+      key={pin.id}
+      className={cn(
+        "group bg-accent absolute size-4 cursor-pointer rounded-full",
+        "disabled:cursor-default",
+        "scale-200 opacity-0" // initial animation class
+      )}
+      data-pin
+      aria-label={pin.name}
+      style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <span className="sr-only">{pin.name}</span>
+      <div
+        aria-hidden="true"
+        className="bg-accent/60 absolute inset-0 animate-ping rounded-full group-disabled:hidden"
+      />
+    </button>
   );
 }

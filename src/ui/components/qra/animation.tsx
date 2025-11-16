@@ -27,16 +27,24 @@ function animateBlurTransition(
   return tl;
 }
 
-export function useAnimatePathTransition(
-  pathRef: React.RefObject<SVGPathElement | null>,
-  containerRef: React.RefObject<HTMLDivElement | null>,
-  PIN_DATA: PinData[]
-) {
+export function useAnimatePathTransition({
+  pathRef,
+  mapContainerRef,
+  contentRef,
+  secondaryContentRef,
+  pinData,
+}: {
+  pathRef: React.RefObject<SVGPathElement | null>;
+  mapContainerRef: React.RefObject<HTMLDivElement | null>;
+  contentRef: React.RefObject<HTMLDivElement | null>;
+  secondaryContentRef: React.RefObject<HTMLDivElement | null>;
+  pinData: PinData[];
+}) {
   const tl = useRef<GSAPTimeline>(null);
 
   useGSAP(() => {
     const path = pathRef.current;
-    const container = containerRef.current;
+    const container = mapContainerRef.current;
 
     if (!path || !container) return;
 
@@ -49,7 +57,7 @@ export function useAnimatePathTransition(
 
     // This is arbitrary. In practice it would be a more dynamic pin selection
     // This is only for demonstration purposes.
-    const [pin1, pin2] = PIN_DATA;
+    const [pin1, pin2] = pinData;
 
     // Convert percentages to actual coordinates
     const offset = 6; // Offset to account for the pin size
@@ -70,19 +78,36 @@ export function useAnimatePathTransition(
 
     const length = path.getTotalLength();
 
-    gsap.set(svg, {
-      opacity: 1,
-    });
     gsap.set(path, {
       strokeDasharray: length,
       strokeDashoffset: length,
     });
 
-    tl.current.to(path, {
-      strokeDashoffset: 0,
-      duration: 2,
-      ease: "power2.inOut",
-    });
+    tl.current
+      .set(svg, {
+        opacity: 1,
+      })
+      .to(path, {
+        strokeDashoffset: 0,
+        duration: 1.5,
+        ease: "power2.inOut",
+      })
+      .add(
+        animateBlurTransition(contentRef.current?.children || [], "out"),
+        "<"
+      )
+      .add(
+        animateBlurTransition(
+          secondaryContentRef.current?.children || [],
+          "in"
+        ),
+        "<+0.3"
+      )
+      .call(() => {
+        if (contentRef.current) contentRef.current.inert = true;
+        if (secondaryContentRef.current)
+          secondaryContentRef.current.inert = false;
+      });
   }, []);
 
   return tl;
@@ -241,15 +266,78 @@ export function useZoomAnimation({
           animateBlurTransition(contentRef.current?.children || [], "out"),
           "<"
         )
+        .call(() => {
+          const isReversed = tl.current?.reversed();
+          if (contentRef.current)
+            contentRef.current.inert = isReversed ? false : true;
+          if (pinContentRef.current)
+            pinContentRef.current.inert = isReversed ? true : false;
+        })
         .add(
           animateBlurTransition(pinContentRef.current?.children || [], "in"),
           ">-0.1"
         );
-
-      tl.current?.play();
     },
     { scope: containerRef, dependencies: [activePin] }
   );
+
+  return tl;
+}
+
+export function useOverlayAnimation({
+  overlayRef,
+}: {
+  overlayRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const tl = useRef<GSAPTimeline | null>(null);
+
+  useGSAP(() => {
+    tl.current = gsap.timeline({
+      paused: true,
+      defaults: {
+        ease: "power2.inOut",
+      },
+    });
+    const parent = overlayRef.current;
+
+    if (!parent) return;
+
+    const overlay = gsap.utils.selector(parent || "")("[data-animate-overlay]");
+    const shutter = gsap.utils.selector(parent || "")("[data-animate-shutter]");
+    const contentItems = gsap.utils.selector(parent || "")("[data-animate]");
+
+    tl.current
+      .set(contentItems, {
+        opacity: 0,
+        y: 10,
+      })
+      .to(shutter, {
+        y: 0,
+        duration: 0.6,
+        ease: "power2.in",
+      })
+      .set(overlay, {
+        opacity: 1,
+      })
+      .to(
+        shutter,
+        {
+          y: "-100%",
+          duration: 0.3,
+        },
+        ">+0.3"
+      )
+      .to(
+        contentItems,
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.3,
+          stagger: 0.075,
+        },
+        ">-0.1"
+      );
+  }, []);
 
   return tl;
 }
