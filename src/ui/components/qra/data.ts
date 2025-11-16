@@ -8,6 +8,11 @@ export const PIN_DATA = [
       title: "RAF Lossiemouth",
       description:
         "Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi unde saepe, assumenda totam excepturi, odio aut harum corrupti cumque at voluptate illo accusantium velit nobis error atque eum nemo quidem.",
+      cta: {
+        label: "Find out more",
+        href: "/lossiemouth",
+      },
+      youtubeVideoId: "2-G2wxPf-LU",
     },
   },
   {
@@ -19,6 +24,10 @@ export const PIN_DATA = [
       title: "Example Pin Content Title",
       description:
         "Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi unde saepe, assumenda totam excepturi, odio aut harum corrupti cumque at voluptate illo accusantium velit nobis error atque eum nemo quidem.",
+      cta: {
+        label: "Example CTA",
+        href: "/example",
+      },
     },
   },
 ];

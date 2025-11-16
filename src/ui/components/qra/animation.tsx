@@ -18,9 +18,9 @@ function animateTextContent(
     opacity: isIn ? 1 : 0,
     filter: isIn ? "blur(0px)" : "blur(4px)",
     scale: isIn ? 1 : 1.1,
-    stagger: 0.15,
+    stagger: 0.1,
     duration: isIn ? 0.6 : 0.3,
-    ease: isIn ? "back.out(1.1)" : "power2.in",
+    ease: "power2.in",
     ...options,
   });
 
@@ -127,6 +127,8 @@ export function useZoomAnimation({
       tl.current
         .to(mapContainerRef.current, {
           scale: scale,
+          x: `${50 - activePin.x}%`,
+          y: `${50 - activePin.y}%`,
           duration: 1.2,
         })
         .to(

@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import signalTowerImage from "../../../../public/signal-tower.png";
 import { useLoadAnimation, useZoomAnimation } from "./animation";
@@ -12,13 +13,6 @@ import UKMap from "./uk-map";
 
 // -- Next steps --
 // Add the progress indicator at the bottom (sticky)
-// Set up pin data
-// Add pins to the map
-// Make pints interactive
-// Add back functionality when clicking a pin
-
-// TODO:
-// Update content to be more inline with the design
 
 export default function QRA() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -89,7 +83,7 @@ export default function QRA() {
           ))}
         </div>
         {/* Right Side content section */}
-        <div className="my-auto isolate grid grid-cols-1 grid-rows-1">
+        <div className="isolate grid grid-cols-1 grid-rows-1 items-center">
           {/* Initial content  */}
           <div ref={contentRef} className="col-1 row-1 space-y-4">
             {/* Typically I would not use an next/image for this type of thing but an SVG.
@@ -115,6 +109,9 @@ export default function QRA() {
           </div>
 
           {/* Pin content */}
+          {/* While I have not included it here. It would be very simple to include images (eg the RAF base logos in the design) in pin content derived from the pin data.
+          e.g. <Image src={activePin.image} alt={activePin.name} width={100} height={100} />
+          To focus more on the animations and functionality I have left the content quite basic but extensibility is built in */}
           {activePin && (
             <div
               key={activePin.id}
@@ -138,9 +135,32 @@ export default function QRA() {
               <p className={cn("text-xl", initialAnimationClasses)}>
                 {activePin.content.description}
               </p>
-              <Button className={cn("mt-8", initialAnimationClasses)}>
-                Co-ordinate response
-              </Button>
+
+              <Link
+                href={activePin.content.cta.href}
+                className={cn(
+                  "inline-block underline text-sm",
+                  initialAnimationClasses
+                )}
+              >
+                {activePin.content.cta.label}
+              </Link>
+              {activePin.content.youtubeVideoId && (
+                <div
+                  className={cn(
+                    "aspect-video w-full max-w-2xl",
+                    initialAnimationClasses
+                  )}
+                >
+                  <iframe
+                    src={`https://www.youtube.com/embed/${activePin.content.youtubeVideoId}`}
+                    title={`${activePin.content.title} video`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full rounded-lg"
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
