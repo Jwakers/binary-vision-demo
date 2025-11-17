@@ -6,8 +6,9 @@ import { ArrowLeft } from "lucide-react";
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import lossiemouthInsigniaImage from "~/public/lossiemouth-insignia.png";
 import rafJetImage from "~/public/raf-jet.jpg";
-import signalTowerImage from "../../../../public/signal-tower.png";
+import signalTowerImage from "~/public/signal-tower.png";
 import {
   useAnimatePathTransition,
   useLoadAnimation,
@@ -26,6 +27,7 @@ import UKMap from "./uk-map";
 // Add the aircraft flying toward the map
 // As part of the path animation, zoom the map to the two pins
 // Add overlay back button
+// Treat modals as portals to more easily manipulate the background content
 
 const initialAnimationClasses = "opacity-0 origin-left scale-110 blur-sm";
 
@@ -309,9 +311,44 @@ function ScrambleOverlay({
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
 }) {
+  // Ideally the video here would be streamed in from a CDN or video service to save bandwidth.
+  // For the demo it is statically hosted for speed of development.
   return (
     <Overlay containerRef={containerRef}>
-      [Placeholder content for scramble overlay]
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 size-full object-cover"
+      >
+        <source src="/raf-video.mp4" type="video/mp4" />
+      </video>
+      <div className="isolate mx-auto flex h-dvh items-end px-19.5 pb-[188px]">
+        <div
+          className="bg-foreground/50 max-w-[445px] space-y-4 p-7.5 backdrop-blur"
+          data-animate
+        >
+          <div className="flex items-start justify-between gap-6.25">
+            <h2 className="text-3xl font-bold" data-animate>
+              RAF Lossiemouth
+              <br />
+              Scramble
+            </h2>
+            <Image
+              src={lossiemouthInsigniaImage}
+              alt="RAF Lossiemouth Insignia"
+              className="w-8.75"
+              data-animate
+            />
+          </div>
+          <p className="text-lg" data-animate>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi unde
+            saepe, assumenda totam excepturi, odio aut harum corrupti cumque at
+            voluptate illo accusantium velit nobis error atque eum nemo quidem.
+          </p>
+        </div>
+      </div>
     </Overlay>
   );
 }
