@@ -20,9 +20,6 @@ import { Overlay } from "./overlay";
 import ProgressIndicator from "./progress-indicator";
 import UKMap from "./uk-map";
 
-// -- Next steps --
-// Handle scramble jets button click
-
 // Enhancements
 // Add the aircraft flying toward the map
 // As part of the path animation, zoom the map to the two pins
@@ -89,14 +86,14 @@ export default function QRA() {
     <>
       <div
         data-animate-overlay
-        className="relative h-dvh min-h-[1080px] overflow-hidden pt-20"
+        className="relative h-dvh min-h-[1000px] overflow-hidden pt-20"
       >
         <div
           ref={containerRef}
-          className="container mx-auto grid h-full grid-cols-[auto_1fr]"
+          className="container mx-auto grid h-full grid-cols-[auto_1fr] px-6"
         >
           <div ref={mapContainerRef} className="relative self-center">
-            {/* Got this colour from the map using a color picker.
+            {/* I got this colour from the map using a color picker.
           Does not seem to be part of the design system so I am inlining it here. */}
             <UKMap
               className={cn(
@@ -181,27 +178,21 @@ export default function QRA() {
                     initialAnimationClasses
                   )}
                   onClick={handleBackClick}
-                  aria-hidden="true"
                 >
                   <ArrowLeft className="size-3" />
                   <span>Back</span>
                 </button>
                 <h2
                   className={cn("text-3xl font-bold", initialAnimationClasses)}
-                  aria-hidden="true"
                 >
                   {activePin.content.title}
                 </h2>
-                <p
-                  className={cn("text-xl", initialAnimationClasses)}
-                  aria-hidden="true"
-                >
+                <p className={cn("text-xl", initialAnimationClasses)}>
                   {activePin.content.description}
                 </p>
 
                 <Link
                   href={activePin.content.cta.href}
-                  aria-hidden="true"
                   className={cn(
                     "inline-block text-sm underline",
                     initialAnimationClasses
@@ -211,7 +202,6 @@ export default function QRA() {
                 </Link>
                 {activePin.content.youtubeVideoId ? (
                   <div
-                    aria-hidden="true"
                     className={cn(
                       "aspect-video w-full max-w-2xl",
                       initialAnimationClasses
@@ -222,6 +212,7 @@ export default function QRA() {
                       title={`${activePin.content.title} video`}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
+                      loading="lazy"
                       className="h-full w-full rounded-lg"
                     />
                   </div>
@@ -311,7 +302,7 @@ function ScrambleOverlay({
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  // Ideally the video here would be streamed in from a CDN or video service to save bandwidth.
+  // Ideally the video here would be preloaded and streamed in from a CDN or video service to save bandwidth.
   // For the demo it is statically hosted for speed of development.
   return (
     <Overlay containerRef={containerRef}>
@@ -407,7 +398,6 @@ function Pin({
 }) {
   return (
     <button
-      key={pin.id}
       className={cn(
         "group bg-accent absolute size-4 cursor-pointer rounded-full",
         "disabled:cursor-default",
@@ -418,6 +408,7 @@ function Pin({
       style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
       onClick={onClick}
       disabled={disabled}
+      type="button"
     >
       <span className="sr-only">{pin.name}</span>
       <div

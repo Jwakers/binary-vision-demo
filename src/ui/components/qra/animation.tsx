@@ -6,6 +6,8 @@ import { PinData } from "./data";
 
 gsap.registerPlugin(useGSAP);
 
+const MAP_SCALE = 8;
+
 function animateBlurTransition(
   element: gsap.TweenTarget,
   direction: "in" | "out" = "in",
@@ -40,7 +42,7 @@ export function useAnimatePathTransition({
   secondaryContentRef: React.RefObject<HTMLDivElement | null>;
   pinData: PinData[];
 }) {
-  const tl = useRef<GSAPTimeline>(null);
+  const tl = useRef<GSAPTimeline | null>(null);
 
   useGSAP(() => {
     const path = pathRef.current;
@@ -121,7 +123,7 @@ export function useLoadAnimation({
   contentRef: React.RefObject<HTMLDivElement | null>;
   progressIndicatorRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  const tl = useRef<GSAPTimeline>(null);
+  const tl = useRef<GSAPTimeline | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   useGSAP(
@@ -134,7 +136,9 @@ export function useLoadAnimation({
       );
 
       if (prefersReducedMotion) {
-        // Instantly show all content without animation
+        // Instantly show all content without animation.
+        // While I have not implemented this fully, it would be simple to do so.
+        // I just want to showcase this as a possible accessibility feature.
         gsap.set([map, contentRef.current?.children], {
           opacity: 1,
           scale: 1,
@@ -238,7 +242,6 @@ export function useZoomAnimation({
     () => {
       if (!tl.current || !mapContainerRef.current || !activePin) return;
 
-      const scale = 8;
       const pins = gsap.utils.toArray("[data-pin]");
 
       gsap.set(mapContainerRef.current, {
@@ -247,7 +250,7 @@ export function useZoomAnimation({
       tl.current.clear();
       tl.current
         .to(mapContainerRef.current, {
-          scale: scale,
+          scale: MAP_SCALE,
           x: `${50 - activePin.x}%`,
           y: `${50 - activePin.y}%`,
           duration: 1.2,
@@ -255,7 +258,7 @@ export function useZoomAnimation({
         .to(
           pins,
           {
-            scale: 1 / scale,
+            scale: 1 / MAP_SCALE,
             duration: 1.2,
           },
           "<"
