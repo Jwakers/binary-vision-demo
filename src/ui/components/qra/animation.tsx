@@ -357,7 +357,9 @@ export function useOverlayAnimation({
 
     if (transitionType === "circle") {
       const [wrapper] = q("[data-animate-circle]");
-      const circles = wrapper?.querySelectorAll("circle:not(#maskHole)");
+      if (!wrapper) return;
+
+      const circles = wrapper.querySelectorAll("circle:not(#maskHole)");
       const maskHole = q("#maskHole");
 
       tl.current
@@ -385,6 +387,16 @@ export function useOverlayAnimation({
             ease: "power2.inOut",
           },
           ">-=0.1"
+        )
+        .to(
+          contentItems,
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.3,
+            stagger: 0.075,
+          },
+          "<+=0.3"
         );
     }
 

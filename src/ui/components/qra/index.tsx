@@ -165,12 +165,7 @@ export default function QRA() {
             e.g. <Image src={activePin.image} alt={activePin.name} width={100} height={100} />
             To focus more on the animations and functionality I have left the content quite basic but extensibility is built in */}
             {activePin && (
-              <div
-                key={activePin.id}
-                className="col-1 row-1 space-y-4"
-                ref={pinContentRef}
-                inert
-              >
+              <div className="col-1 row-1 space-y-4" ref={pinContentRef} inert>
                 <button
                   type="button"
                   className={cn(
