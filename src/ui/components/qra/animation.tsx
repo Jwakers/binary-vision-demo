@@ -32,6 +32,8 @@ function animateBlurTransition(
 function animateJet(jetRef: React.RefObject<HTMLDivElement | null>) {
   const tl = gsap.timeline();
 
+  if (!jetRef.current) return tl;
+
   tl.set(jetRef.current, {
     rotate: Math.atan2(-400, -window.innerWidth) * (180 / Math.PI) + 90,
   })
